@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Company: Algoma Steel Inc.</title>
+  <style>
+    body {
+      font-family: 'Avenir Next', sans-serif;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      font-size: 1.8rem;
+      margin-bottom: 0.2rem;
+    }
+    h1 small {
+      display: block;
+      font-size: 1rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .column {
+      flex: 1;
+      min-width: 280px;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    input {
+      max-width: 130px;
+      width: 100%;
+      padding: 0.4rem;
+      margin-top: 0.2rem;
+      font-size: 0.9rem;
+    }
+    .result {
+      margin-top: 2rem;
+      background-color: #fff;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      font-size: 0.9rem;
+      max-width: 800px;
+      width: 100%;
+    }
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    Algoma Equity with Tail Risk Factoring
+    <small>This simulator is designed to structure a deep OTM synthentic call-spread, capping upside returns while factoring in steel tail risk</small>
+  </h1>
+
+  <div class="container">
+    <div class="column">
+      <label>Common Share Price at Exit ($):
+        <input type="number" id="exitPrice" value="13">
+      </label>
+      <label>Warrant Purchase Price ($):
+        <input type="number" id="warrantPrice" value="0.6">
+      </label>
+      <label>Strike Price of Warrant ($):
+        <input type="number" id="strikePrice" value="11.5">
+      </label>
+    </div>
+    <div class="column">
+      <label>% Allocation to Common:
+        <input type="number" id="allocationCommon" value="70">
+      </label>
+      <label>% Allocation to Warrants:
+        <input type="number" id="allocationWarrants" value="25">
+      </label>
+      <label>% Allocation to Futures:
+        <input type="number" id="allocationFutures" value="5">
+      </label>
+      <label>Steel Futures Price at Exit ($/tonne):
+        <input type="number" id="steelPrice" value="1000">
+      </label>
+    </div>
+  </div>
+
+  <div class="result" id="resultBox"></div>
+
+  <script>
+    function calculate() {
+      const exitPrice = parseFloat(document.getElementById('exitPrice').value);
+      const warrantPrice = parseFloat(document.getElementById('warrantPrice').value);
+      const strikePrice = parseFloat(document.getElementById('strikePrice').value);
+      const allocationCommon = parseFloat(document.getElementById('allocationCommon').value) / 100;
+      const allocationWarrants = parseFloat(document.getElementById('allocationWarrants').value) / 100;
+      const allocationFutures = parseFloat(document.getElementById('allocationFutures').value) / 100;
+      const steelPrice = parseFloat(document.getElementById('steelPrice').value);
+
+      const warrantValue = Math.max(0, exitPrice - strikePrice);
+      const warrantReturn = warrantValue > 0 ? ((warrantValue - warrantPrice) / warrantPrice) : -0.5;
+      const commonInitial = 6;
+      const commonReturn = (exitPrice - commonInitial) / commonInitial;
+
+      let futuresReturn;
+      if (steelPrice >= 1000) {
+        futuresReturn = -0.15;
+      } else {
+        futuresReturn = Math.min((1000 - steelPrice) / 1000, 0.8);
+      }
+
+      const totalReturn = warrantReturn * allocationWarrants + commonReturn * allocationCommon + futuresReturn * allocationFutures;
+
+      document.getElementById('resultBox').innerHTML = `
+        <strong>Warrant Return:</strong> ${(warrantReturn * 100).toFixed(2)}%<br>
+        <strong>Common Return:</strong> ${(commonReturn * 100).toFixed(2)}%<br>
+        <strong>Futures Return:</strong> ${(futuresReturn * 100).toFixed(2)}%<br><br>
+        <strong>Total Portfolio Return:</strong> ${(totalReturn * 100).toFixed(2)}%
+      `;
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
